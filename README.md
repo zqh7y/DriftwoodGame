@@ -1,5 +1,7 @@
 <p align="center"><img src="docs/screenshots/banner.jpg" alt="Driftwood Dock: an orange tabby cat fishing from a wooden dock at golden hour" width="720"></p>
 
+<img src="public/icons/icon-192.png" alt="Driftwood Dock app icon" width="96" align="left">
+
 # Driftwood Dock
 
 A cozy, relaxing, mostly-AFK fishing game for phones. An orange tabby cat in a bucket hat fishes
