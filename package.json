@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "shot": "node tools/shot.mjs",
-    "artifact": "node tools/build-artifact.mjs"
+    "artifact": "node tools/build-artifact.mjs",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:icons": "npx @capacitor/assets generate --android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
   },
   "devDependencies": {
     "@capacitor/assets": "^4.0.0",

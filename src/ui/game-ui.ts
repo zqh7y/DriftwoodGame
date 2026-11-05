@@ -747,6 +747,8 @@ export function mountGameUi(scene: Scene, game: Game): void {
     const v = scene.view.getBoundingClientRect();
     const label = h.count > 1 ? `${h.species.name} x${h.count}` : h.species.name;
     const rare = TIER[h.species.rarity] >= 3 ? `${h.species.rarity} · ` : '';
+    // The cat keeps fishing while you're in the aquarium: no lake labels floating over the tank.
+    if (document.body.classList.contains('is-aquarium')) return;
     float(`${rare}${label}`, v.left + b.x + 8 * scene.u, v.top + b.y - 46 * scene.u, 'floater-small');
     flyToInventory(h.species);
   });

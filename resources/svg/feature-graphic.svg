@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500"><defs>
+  <linearGradient id="bgTeal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8fe0d6"/><stop offset="0.55" stop-color="#4cc4bd"/><stop offset="1" stop-color="#2e9a99"/>
+  </linearGradient>
+  <radialGradient id="bgGlow" cx="0.5" cy="0.18" r="0.75">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0.38"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#9ad8ee"/><stop offset="0.35" stop-color="#5fb3e3"/><stop offset="1" stop-color="#2c74ae"/>
+  </linearGradient>
+  <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffc277"/><stop offset="0.6" stop-color="#f9a447"/><stop offset="1" stop-color="#e88a35"/>
+  </linearGradient>
+  <linearGradient id="hat" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#ffd84f"/><stop offset="1" stop-color="#e8b52c"/>
+  </linearGradient>
+  <linearGradient id="red" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f47c70"/><stop offset="1" stop-color="#df514f"/>
+  </linearGradient>
+
+    <linearGradient id="gsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d8fd6"/><stop offset="0.55" stop-color="#f4a7b5"/><stop offset="1" stop-color="#ffd9a0"/></linearGradient>
+    <linearGradient id="gwater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b9a8"/><stop offset="0.25" stop-color="#c68fb0"/><stop offset="1" stop-color="#4a5aa6"/></linearGradient>
+    <radialGradient id="sunglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff3c4" stop-opacity="0.9"/><stop offset="0.35" stop-color="#ffd08a" stop-opacity="0.45"/><stop offset="1" stop-color="#ffd08a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6ad6d"/><stop offset="1" stop-color="#c98a4f"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f9a447"/><stop offset="1" stop-color="#e07b2e"/></linearGradient>
+    <filter id="tsh" x="-10%" y="-30%" width="120%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#5a3050" flood-opacity="0.35"/></filter>
+  </defs>
+  <rect width="1024" height="500" fill="url(#gsky)"/>
+  <circle cx="770" cy="262" r="190" fill="url(#sunglow)"/>
+  <circle cx="770" cy="262" r="44" fill="#ffe7a8"/>
+  <!-- soft far hills -->
+  <path d="M0 262 C90 226 170 232 250 250 C330 228 420 222 520 252 C600 236 680 240 760 258 C860 236 950 232 1024 248 L1024 280 L0 280 Z" fill="#b88aaf" opacity="0.75"/>
+  <path d="M0 272 C120 252 220 258 330 268 C460 250 560 256 660 270 C780 258 900 256 1024 266 L1024 284 L0 284 Z" fill="#9a6f9f" opacity="0.8"/>
+  <!-- lake -->
+  <rect y="280" width="1024" height="220" fill="url(#gwater)"/>
+  <g fill="#ffe7a8">
+    <rect x="730" y="292" width="80" height="5" rx="2.5" opacity="0.9"/><rect x="712" y="310" width="116" height="5" rx="2.5" opacity="0.7"/>
+    <rect x="740" y="330" width="60" height="5" rx="2.5" opacity="0.6"/><rect x="700" y="352" width="140" height="5" rx="2.5" opacity="0.45"/>
+    <rect x="726" y="378" width="88" height="5" rx="2.5" opacity="0.35"/><rect x="690" y="408" width="160" height="5" rx="2.5" opacity="0.25"/>
+  </g>
+  <g fill="none" stroke="#ffe2d6" stroke-linecap="round" stroke-width="3" opacity="0.5">
+    <path d="M90 330 q20 -6 40 0"/><path d="M470 420 q22 -7 44 0"/><path d="M880 440 q20 -6 40 0"/><path d="M560 320 q14 -5 28 0"/>
+  </g>
+  <!-- dock -->
+  <g stroke="#43362b" stroke-width="4" stroke-linejoin="round">
+    <rect x="70" y="372" width="18" height="110" fill="#845831"/><rect x="200" y="372" width="18" height="100" fill="#845831"/><rect x="330" y="372" width="18" height="94" fill="#845831"/>
+    <path d="M-10 350 L400 340 L400 374 L-10 384 Z" fill="url(#deck)"/>
+    <path d="M-10 384 L400 374 L400 388 L-10 398 Z" fill="#a37347"/>
+  </g>
+  <g stroke="#845831" stroke-width="3" opacity="0.7"><path d="M80 348 v32 M170 346 v32 M260 344 v32 M350 342 v32"/></g>
+  <!-- rod + line -->
+  <path d="M352 318 L560 150" stroke="#43362b" stroke-width="7" stroke-linecap="round"/>
+  <path d="M352 318 L560 150" stroke="#94704f" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M560 150 Q590 250 606 384" fill="none" stroke="#f4fbff" stroke-width="2" opacity="0.9"/>
+  <g transform="translate(606 400) scale(0.55) translate(-342 -170)">
+  <g fill="none" stroke="#e8f7fe" stroke-linecap="round">
+    <ellipse cx="342" cy="176" rx="58" ry="15" stroke-width="6" opacity="0.5"/>
+    <ellipse cx="342" cy="176" rx="34" ry="9" stroke-width="6" opacity="0.85"/>
+  </g>
+  <line x1="342" y1="112" x2="342" y2="138" stroke="#43362b" stroke-width="7" stroke-linecap="round"/>
+  <g stroke="#43362b" stroke-width="7" stroke-linejoin="round">
+    <path d="M314 160 a28 28 0 0 1 56 0 z" fill="url(#red)"/>
+    <path d="M314 160 a28 24 0 0 0 56 0 z" fill="#fafdff"/>
+  </g>
+  <ellipse cx="331" cy="148" rx="7" ry="5" fill="#ffffff" opacity="0.8"/></g>
+  <!-- the cat sitting on the dock end -->
+  <g stroke="#43362b" stroke-width="4" stroke-linejoin="round">
+    <path d="M378 352 C420 350 432 330 424 316" fill="none" stroke="#43362b" stroke-width="13" stroke-linecap="round"/>
+    <path d="M378 352 C420 350 432 330 424 316" fill="none" stroke="#e07b2e" stroke-width="7" stroke-linecap="round"/>
+    <path d="M262 350 C252 300 270 262 310 262 C350 262 368 300 360 350 Z" fill="url(#body)"/>
+  </g>
+  <path d="M290 350 C284 318 292 296 310 292 C328 296 336 318 330 350 Z" fill="#fff1df"/>
+  <path d="M270 276 C300 292 322 292 352 276 C352 288 332 300 311 300 C290 300 270 288 270 276 Z" fill="#2e9a99" stroke="#43362b" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M332 290 l16 34 l-14 2 z" fill="#4cc4bd" stroke="#43362b" stroke-width="4" stroke-linejoin="round"/>
+  <ellipse cx="350" cy="320" rx="13" ry="10" fill="#ffd9a8" stroke="#43362b" stroke-width="4"/>
+  <g transform="translate(311 240) scale(0.36) translate(-256 -330)">
+  <!-- ears (poke out under the hat brim) -->
+  <g stroke="#43362b" stroke-width="8" stroke-linejoin="round">
+    <path d="M150 300 L140 218 L212 258 Z" fill="#f9a447"/>
+    <path d="M362 300 L372 218 L300 258 Z" fill="#f9a447"/>
+  </g>
+  <path d="M158 286 L153 236 L196 262 Z" fill="#ffc9b0"/>
+  <path d="M354 286 L359 236 L316 262 Z" fill="#ffc9b0"/>
+  <!-- head -->
+  <path d="M256 240 C330 240 376 278 380 330 C384 384 330 420 256 420 C182 420 128 384 132 330 C136 278 182 240 256 240 Z"
+        fill="url(#fur)" stroke="#43362b" stroke-width="8"/>
+  <!-- cheek fluff -->
+  <g fill="none" stroke="#43362b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M134 352 l-16 6 l14 6"/><path d="M378 352 l16 6 l-14 6"/>
+  </g>
+  <!-- tabby stripes -->
+  <g fill="#e07b2e">
+    <path d="M232 268 q24 16 48 0 q-4 14 -24 16 q-20 -2 -24 -16z"/>
+    <path d="M150 318 q22 2 32 12 q-20 2 -32 -2z"/><path d="M362 318 q-22 2 -32 12 q20 2 32 -2z"/>
+    <path d="M146 344 q18 0 28 8 q-18 4 -28 0z"/><path d="M366 344 q-18 0 -28 8 q18 4 28 0z"/>
+  </g>
+  <!-- muzzle -->
+  <ellipse cx="256" cy="372" rx="58" ry="34" fill="#fff1df"/>
+  <!-- eyes -->
+  <g fill="#2b231d"><ellipse cx="208" cy="330" rx="15" ry="19"/><ellipse cx="304" cy="330" rx="15" ry="19"/></g>
+  <g fill="#ffffff"><circle cx="213" cy="322" r="6"/><circle cx="309" cy="322" r="6"/><circle cx="203" cy="337" r="2.6"/><circle cx="299" cy="337" r="2.6"/></g>
+  <!-- blush -->
+  <g fill="#f28fbd" opacity="0.55"><ellipse cx="174" cy="366" rx="20" ry="11"/><ellipse cx="338" cy="366" rx="20" ry="11"/></g>
+  <!-- nose + mouth -->
+  <path d="M244 352 h24 q-2 10 -12 13 q-10 -3 -12 -13z" fill="#e57a86" stroke="#43362b" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M256 366 v6 q-8 12 -20 4 M256 372 q8 12 20 4" fill="none" stroke="#43362b" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- bucket hat: soft crown, droopy brim -->
+  <g stroke="#43362b" stroke-width="8" stroke-linejoin="round">
+    <path d="M200 252 C200 214 206 192 256 190 C306 192 312 214 312 252 Z" fill="url(#hat)"/>
+    <path d="M194 238 C230 230 282 230 318 238 C338 246 356 260 368 276 C340 292 172 292 144 276 C156 260 174 246 194 238 Z" fill="url(#hat)"/>
+  </g>
+  <path d="M203 236 C234 228 278 228 309 236" fill="none" stroke="#b7861c" stroke-width="7" stroke-linecap="round" opacity="0.75"/>
+  <path d="M168 272 C210 284 302 284 344 272" fill="none" stroke="#b7861c" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 10" opacity="0.8"/>
+  <ellipse cx="234" cy="208" rx="15" ry="8" fill="#ffffff" opacity="0.6" transform="rotate(-18 234 208)"/>
+  </g>
+  <!-- title -->
+  <g filter="url(#tsh)" font-family="Quicksand, sans-serif" text-anchor="middle" fill="#ffffff">
+    <text x="742" y="148" font-size="62" font-weight="700" letter-spacing="1">Driftwood Dock</text>
+    <text x="742" y="190" font-size="23" font-weight="600" opacity="0.92">A cozy lakeside fishing idle</text>
+  </g>
+  </svg>

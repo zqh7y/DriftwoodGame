@@ -19,6 +19,15 @@ const config: CapacitorConfig = {
     captureInput: false,
     webContentsDebuggingEnabled: false,
   },
+  plugins: {
+    // Edge-to-edge: the canvas sky fills the whole screen and the DOM UI already pads itself with
+    // env(safe-area-inset-*) (index.html uses viewport-fit=cover). Light icons read well on the sky.
+    SystemBars: {
+      insetsHandling: 'css',
+      initialViewportFitValueHint: 'cover',
+      style: 'DARK',
+    },
+  },
 };
 
 export default config;

@@ -1,9 +1,48 @@
+<p align="center"><img src="docs/screenshots/banner.jpg" alt="Driftwood Dock: an orange tabby cat fishing from a wooden dock at golden hour" width="720"></p>
+
 # Driftwood Dock
 
-A cozy, mostly-AFK fishing game for phones (TypeScript + Canvas 2D, no game engine).
-A tabby cat fishes off a wooden dock: every catch takes a set time, fish go into your
-**inventory** (duplicates stack), you sell them for **bones**, and spend bones on upgrades. The lake runs its own day–night
-cycle with weather and a night sky full of meteors.
+A cozy, relaxing, mostly-AFK fishing game for phones. An orange tabby cat in a bucket hat fishes
+off a wooden dock while the lake drifts from sunrise to a starry night. Catch fantasy fish, sell
+them for bones, upgrade your gear, and keep your favourites in a glowing aquarium. Made to unwind
+with, especially at night.
+
+<p align="center">
+  <img src="docs/screenshots/fishing-day.jpg" alt="Fishing by day" width="200">
+  <img src="docs/screenshots/fishing-sunset.jpg" alt="Fishing at sunset" width="200">
+  <img src="docs/screenshots/fishing-night.jpg" alt="Fishing at night with the lantern lit" width="200">
+</p>
+<p align="center">
+  <img src="docs/screenshots/aquarium-day.jpg" alt="The aquarium by day" width="200">
+  <img src="docs/screenshots/aquarium-night.jpg" alt="The aquarium at night, fish glowing softly" width="200">
+  <img src="docs/screenshots/inventory.jpg" alt="Inventory with stacked fish" width="200">
+  <img src="docs/screenshots/settings.jpg" alt="Settings: clock time, night mode, calm mode, sleep timer" width="200">
+</p>
+
+## Download and play
+
+- **Android:** download the APK from [Releases](https://github.com/zqh7y/DriftwoodGame/releases/latest)
+  (or from the newest **Android APK** run under [Actions](https://github.com/zqh7y/DriftwoodGame/actions)),
+  open it on your phone and allow installing apps from your browser. Step by step: [docs/ANDROID.md](docs/ANDROID.md).
+- **In the browser:** [zqh7y.github.io/DriftwoodGame](https://zqh7y.github.io/DriftwoodGame/). On your phone,
+  use *Add to Home Screen* and it works like an app, even offline.
+
+## Features
+
+- **A living lake:** a day–night cycle that follows your real clock, weather, a starry night with
+  meteors and aurora, a lantern on the dock, reeds that sway, critters and soft ripples.
+- **12 fantasy fish**, from the flame-finned Carp to the cosmic Abyss Leviathan, with live odds on
+  the board under the clock. The rarest two stay a mystery: "???" and shifting symbols.
+- **Mostly AFK:** the cat keeps fishing while you're away. Tap the boost circles on the water to
+  speed up a catch if you feel like it.
+- **Luck events:** rain, fog and storms raise your luck while they last.
+- **Inventory and upgrades:** stack fish, sell them for bones, and upgrade speed, value, luck, hook,
+  depth and AFK time.
+- **Aquarium:** keep fish in a tank where they swim, play, nap, share little feelings and eat.
+  Tap the water to feed them. Fish in the tank earn bones over time; decorate it to earn more.
+- **Relaxing sound:** generated lo-fi music, lake ambience and soft effects.
+- **Made for night:** night mode, calm mode, a sleep timer that fades the music and dims the screen,
+  a battery saver, and separate volume sliders.
 
 ## Run it
 
@@ -47,9 +86,13 @@ Test shortcuts (dev and the preview page only, switched off in `npm run build`):
    (x decorations); slots grow from 3 to 12. It keeps earning at a quarter pace while you're away.
    Balance lives in `src/game/aquarium.ts`; the tank is drawn by `src/aquarium/`.
 
-## Toward Google Play
+## Android and Google Play
 
-- The web build can be wrapped as an Android app with Capacitor (`@capacitor/android`).
-- Saves use `localStorage`, which persists inside the Capacitor WebView. Swap in
-  `@capacitor/preferences` later for extra safety.
-- Drawing resolution is capped at 2× for smooth frames on mid-range phones.
+- The game is wrapped as an Android app with Capacitor (`android/`). `npm run android:sync` builds
+  the web game and copies it in; `npm run android:icons` regenerates icons and splash screens from
+  `resources/`.
+- GitHub Actions builds a debug APK on every push (`.github/workflows/android.yml`) and attaches it
+  to a Release for `v*` tags. The web version deploys to GitHub Pages from `master`
+  (`.github/workflows/pages.yml`).
+- Saves use `localStorage`, which persists inside the app. For a Play Store release, see
+  [docs/ANDROID.md](docs/ANDROID.md) (signed AAB with `./gradlew bundleRelease`).

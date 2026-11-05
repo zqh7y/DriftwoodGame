@@ -9,14 +9,22 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!-- Game theme: no action bar, calm dusk-sky system bars with light icons.
+         (Android 15+ draws the app edge-to-edge; the game pads its UI with env(safe-area-inset-*).) -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/dusk_sky</item>
+        <item name="android:statusBarColor">@color/dusk_sky</item>
+        <item name="android:navigationBarColor">@color/dusk_sky</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/dusk_sky</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

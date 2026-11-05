@@ -1,5 +1,23 @@
-node_modules
-dist
-artifact
-shots
+# Dependencies and build output
+node_modules/
+dist/
+artifact/
+shots/
+
+# Logs and OS clutter
 *.log
+.DS_Store
+Thumbs.db
+
+# Android build outputs (the android/ project itself stays tracked)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/capacitor-cordova-android-plugins/build/
+
+# Signing keys and their passwords never go in the repo
+*.jks
+*.keystore
+keystore.properties

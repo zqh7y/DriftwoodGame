@@ -3,6 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#27306b">
+<meta name="description" content="Driftwood Dock: a cozy, relaxing lakeside fishing game. Your cat keeps fishing while you're away.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Driftwood">
+<meta name="application-name" content="Driftwood Dock">
 <!-- artifact:head:begin -->
 <title>Driftwood Dock</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -585,11 +596,131 @@
     .gear-btn .gi { transition: none; }
   }
 </style>
+<style id="loader-style">
+  /* Loading screen: a calm dusk over the lake, shown before the game script runs.
+     src/main.ts fades it out (#loader.ld-out) once the game is ready; the CSS
+     failsafe below hides it after 8 s on its own if the script never gets there. */
+  #loader {
+    --ld-sky-1: #27306b; --ld-sky-2: #3e3f80; --ld-sky-3: #6a5596; --ld-sky-4: #c58aa3;
+    --ld-water-1: #b98aae; --ld-water-2: #5f63a3; --ld-water-3: #2c3577;
+    --ld-moon: #eef3ff; --ld-ink: #43362b; --ld-red: #df514f; --ld-white: #fafdff;
+    --ld-text: #ffffff; --ld-text-soft: rgba(255, 255, 255, 0.84);
+    --ld-track: rgba(255, 255, 255, 0.2); --ld-ring: rgba(255, 255, 255, 0.55);
+    position: fixed; inset: 0; z-index: 1000; overflow: hidden;
+    background: linear-gradient(180deg, var(--ld-sky-1) 0%, var(--ld-sky-2) 34%, var(--ld-sky-3) 58%, var(--ld-sky-4) 70%);
+    color: var(--ld-text); font-family: 'Quicksand', 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+    font-weight: 600; text-align: center; user-select: none; -webkit-user-select: none;
+    transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+    animation: ld-failsafe 0.6s ease 8s forwards;
+  }
+  #loader.ld-out { opacity: 0; visibility: hidden; pointer-events: none; }
+  @keyframes ld-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+  .ld-stars { position: absolute; inset: 0 0 32% 0; }
+  .ld-stars i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; opacity: 0.7;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8); animation: ld-twinkle 3.6s ease-in-out infinite; }
+  .ld-stars i:nth-child(1) { left: 12%; top: 10%; animation-delay: -0.4s; }
+  .ld-stars i:nth-child(2) { left: 28%; top: 22%; width: 2px; height: 2px; animation-delay: -1.6s; }
+  .ld-stars i:nth-child(3) { left: 46%; top: 8%; animation-delay: -2.4s; }
+  .ld-stars i:nth-child(4) { left: 64%; top: 18%; width: 2px; height: 2px; animation-delay: -0.9s; }
+  .ld-stars i:nth-child(5) { left: 86%; top: 34%; animation-delay: -3s; }
+  .ld-stars i:nth-child(6) { left: 8%; top: 38%; width: 2px; height: 2px; animation-delay: -2s; }
+  .ld-stars i:nth-child(7) { left: 36%; top: 44%; width: 2px; height: 2px; animation-delay: -1.2s; }
+  .ld-stars i:nth-child(8) { left: 92%; top: 7%; width: 2px; height: 2px; animation-delay: -2.8s; }
+  .ld-stars i:nth-child(9) { left: 20%; top: 56%; width: 2px; height: 2px; animation-delay: -0.2s; }
+  .ld-stars i:nth-child(10) { left: 74%; top: 50%; width: 2px; height: 2px; animation-delay: -1.9s; }
+  @keyframes ld-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 0.95; transform: scale(1.15); } }
+
+  .ld-moon { position: absolute; top: 9%; right: 14%; width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle at 36% 34%, #fffef6 0%, var(--ld-moon) 55%, #d6def9 100%);
+    box-shadow: 0 0 28px 10px rgba(238, 243, 255, 0.26), 0 0 110px 44px rgba(214, 190, 255, 0.16);
+    animation: ld-glow 6s ease-in-out infinite; }
+  .ld-moon::after { content: ''; position: absolute; left: 26%; top: 52%; width: 9px; height: 7px; border-radius: 50%; background: rgba(170, 182, 222, 0.35); }
+  @keyframes ld-glow { 0%, 100% { box-shadow: 0 0 28px 10px rgba(238, 243, 255, 0.24), 0 0 110px 44px rgba(214, 190, 255, 0.14); }
+    50% { box-shadow: 0 0 34px 14px rgba(238, 243, 255, 0.32), 0 0 130px 54px rgba(214, 190, 255, 0.2); } }
+
+  .ld-water { position: absolute; left: 0; right: 0; bottom: 0; height: 32%;
+    background: linear-gradient(180deg, var(--ld-water-1) 0%, var(--ld-water-2) 34%, var(--ld-water-3) 100%); }
+  .ld-water::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: rgba(255, 236, 240, 0.32); filter: blur(1.5px); }
+  .ld-shine { position: absolute; right: calc(14% - 30px); top: 6%; width: 106px; display: grid; gap: 10px; justify-items: center; }
+  .ld-shine b { display: block; height: 3px; border-radius: 3px; background: rgba(238, 243, 255, 0.5); animation: ld-shimmer 4s ease-in-out infinite; }
+  .ld-shine b:nth-child(1) { width: 60%; } .ld-shine b:nth-child(2) { width: 90%; animation-delay: -1.3s; opacity: 0.7; }
+  .ld-shine b:nth-child(3) { width: 45%; animation-delay: -2.6s; opacity: 0.5; } .ld-shine b:nth-child(4) { width: 75%; animation-delay: -0.7s; opacity: 0.35; }
+  @keyframes ld-shimmer { 0%, 100% { transform: scaleX(1); opacity: 0.55; } 50% { transform: scaleX(0.7); opacity: 0.28; } }
+  .ld-wave { position: absolute; height: 2px; width: 34px; border-radius: 2px; background: rgba(255, 255, 255, 0.32); animation: ld-drift 7s ease-in-out infinite; }
+  .ld-wave:nth-of-type(1) { left: 12%; top: 22%; } .ld-wave:nth-of-type(2) { left: 70%; top: 58%; width: 44px; animation-delay: -2.5s; }
+  .ld-wave:nth-of-type(3) { left: 24%; top: 72%; width: 28px; animation-delay: -4.5s; }
+  @keyframes ld-drift { 0%, 100% { transform: translateX(0); opacity: 0.25; } 50% { transform: translateX(14px); opacity: 0.5; } }
+
+  .ld-float { position: absolute; left: 50%; top: 34%; width: 0; height: 0; }
+  .ld-ring { position: absolute; left: -46px; top: -6px; width: 92px; height: 24px; border-radius: 50%; border: 2px solid var(--ld-ring);
+    opacity: 0; animation: ld-ripple 4.2s ease-out infinite; }
+  .ld-ring + .ld-ring { animation-delay: -2.1s; }
+  @keyframes ld-ripple { 0% { transform: scale(0.3); opacity: 0.9; } 100% { transform: scale(1.7); opacity: 0; } }
+  .ld-bobber { position: absolute; left: -14px; top: -26px; width: 28px; height: 28px; animation: ld-bob 3s ease-in-out infinite; transform-origin: 50% 90%; }
+  .ld-bobber::before { content: ''; position: absolute; left: 12px; top: -11px; width: 4px; height: 13px; border-radius: 2px; background: var(--ld-ink); }
+  .ld-bobber::after { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--ld-ink);
+    background: linear-gradient(180deg, #f47c70 0%, var(--ld-red) 50%, var(--ld-white) 50%, var(--ld-white) 100%); }
+  @keyframes ld-bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-5px) rotate(3deg); } }
+
+  .ld-center { position: absolute; left: 16px; right: 16px; top: 33%; transform: translateY(-50%); display: grid; justify-items: center; gap: 18px; }
+  .ld-title { margin: 0; font-size: clamp(34px, 9.5vw, 56px); font-weight: 700; line-height: 1.05; letter-spacing: 0.01em;
+    text-shadow: 0 2px 4px rgba(20, 16, 50, 0.25), 0 6px 28px rgba(20, 16, 50, 0.3); animation: ld-rise 1.2s var(--ease-out, ease-out) both; }
+  .ld-sub { margin: -10px 0 0; font-size: 15px; color: var(--ld-text-soft); letter-spacing: 0.04em; animation: ld-rise 1.2s 0.15s ease-out both; }
+  @keyframes ld-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .ld-bar { width: min(220px, 62vw); height: 6px; border-radius: 999px; background: var(--ld-track); overflow: hidden; margin-top: 6px; }
+  .ld-bar span { display: block; width: 42%; height: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6); animation: ld-slide 1.8s ease-in-out infinite; }
+  @keyframes ld-slide { 0% { transform: translateX(-105%); } 100% { transform: translateX(245%); } }
+  .ld-tips { position: relative; width: min(320px, 86vw); height: 3em; font-size: 15px; line-height: 1.45; color: var(--ld-text-soft); }
+  .ld-tips span { position: absolute; inset: 0; opacity: 0; animation: ld-tip 20s ease-in-out infinite; }
+  .ld-tips span:nth-child(2) { animation-delay: 4s; } .ld-tips span:nth-child(3) { animation-delay: 8s; }
+  .ld-tips span:nth-child(4) { animation-delay: 12s; } .ld-tips span:nth-child(5) { animation-delay: 16s; }
+  .ld-tips span:first-child { animation-name: ld-tip-first; }
+  @keyframes ld-tip { 0% { opacity: 0; transform: translateY(5px); } 4%, 17% { opacity: 1; transform: none; } 20%, 100% { opacity: 0; transform: translateY(-3px); } }
+  @keyframes ld-tip-first { 0%, 17% { opacity: 1; transform: none; } 20%, 96% { opacity: 0; transform: translateY(-3px); } 100% { opacity: 1; transform: none; } }
+
+  @media (min-width: 900px) {
+    .ld-center { top: 36%; gap: 20px; }
+    .ld-moon { width: 58px; height: 58px; right: 20%; }
+    .ld-shine { right: calc(20% - 24px); }
+    .ld-float { top: 38%; }
+  }
+  @media (max-height: 520px) { .ld-center { top: 34%; gap: 12px; } .ld-tips { height: 1.6em; } }
+  @media (prefers-reduced-motion: reduce) {
+    #loader { transition-duration: 0.3s; }
+    #loader *, #loader *::before, #loader *::after { animation: none !important; }
+    .ld-tips span:first-child { opacity: 1; }
+    .ld-ring { opacity: 0.5; } .ld-ring + .ld-ring { transform: scale(1.5); opacity: 0.25; }
+    .ld-bar span { width: 100%; opacity: 0.55; }
+  }
+</style>
 <!-- artifact:head:end -->
 </head>
 <body>
 <!-- artifact:body:begin -->
 <canvas id="view" role="img" aria-label="Animated cartoon lake: an orange tabby cat in a yellow bucket hat fishes from a wooden dock among lily pads and cattails, under a sky that turns from day to a starry night"></canvas>
+<div id="loader" role="status" aria-live="polite" aria-label="Loading Driftwood Dock">
+  <div class="ld-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="ld-moon" aria-hidden="true"></div>
+  <div class="ld-water" aria-hidden="true">
+    <div class="ld-shine"><b></b><b></b><b></b><b></b></div>
+    <div class="ld-wave"></div><div class="ld-wave"></div><div class="ld-wave"></div>
+    <div class="ld-float"><div class="ld-ring"></div><div class="ld-ring"></div><div class="ld-bobber"></div></div>
+  </div>
+  <div class="ld-center">
+    <h1 class="ld-title">Driftwood Dock</h1>
+    <p class="ld-sub">settling in by the lake…</p>
+    <div class="ld-bar" aria-hidden="true"><span></span></div>
+    <p class="ld-tips">
+      <span>Your cat keeps fishing while you're away</span>
+      <span>Tap the water in the aquarium to feed your fish</span>
+      <span>Bad weather brings luck</span>
+      <span>Look up at night: a wishing star may fall into the lake</span>
+      <span>Take a breath. The lake isn't going anywhere</span>
+    </p>
+  </div>
+</div>
 <!-- artifact:body:end -->
 <script type="module" src="/src/main.ts"></script>
 </body>

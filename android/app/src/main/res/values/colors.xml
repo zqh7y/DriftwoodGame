@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dusk sky (src/engine/lighting.ts dusk keyframe, "top"); matches capacitor.config.ts backgroundColor. -->
+    <color name="dusk_sky">#2C3577</color>
+</resources>
