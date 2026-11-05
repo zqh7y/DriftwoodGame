@@ -1486,18 +1486,31 @@ export function mountGameUi(scene: Scene, game: Game): void {
   }, 1000);
 
   // ------------------------------------------------------------ ticker  // ------------------------------------------------------------ ticker
-  const shown = { bones: -1, invKey: '', afford: false, timeTxt: '', evTxt: '', happy: '' };
+  // Only touch the DOM when a shown value actually changes: every write invalidates style/paint.
+  const shown = { bones: -1, invKey: '', afford: false, timeTxt: '', evTxt: '', happy: '', dash: '', pct: -1, boost: false };
   const tick = (): void => {
     const now = performance.now();
     circleTick(Math.min(0.1, (now - lastT) / 1000));
     lastT = now;
     const left = game.timeLeft();
     const p = game.biting() ? 1 : 1 - left / game.catchTime();
-    timerFill.style.strokeDashoffset = (100 * (1 - Math.max(0, Math.min(1, p)))).toFixed(2);
-    timer.setAttribute('aria-valuenow', String(Math.round(p * 100)));
+    // 0.1 of 100 is well under a device pixel on the ring, so no visible stepping.
+    const dash = (100 * (1 - Math.max(0, Math.min(1, p)))).toFixed(1);
+    if (dash !== shown.dash) {
+      timerFill.style.strokeDashoffset = dash;
+      shown.dash = dash;
+    }
+    const pctNow = Math.round(p * 100);
+    if (pctNow !== shown.pct) {
+      timer.setAttribute('aria-valuenow', String(pctNow));
+      shown.pct = pctNow;
+    }
     const boosting = now < boostUntil;
     const timeTxt = boosting ? '-1s' : game.biting() ? '!' : left.toFixed(1);
-    timer.classList.toggle('is-boosted', boosting);
+    if (boosting !== shown.boost) {
+      timer.classList.toggle('is-boosted', boosting);
+      shown.boost = boosting;
+    }
     if (timeTxt !== shown.timeTxt) {
       timeText.textContent = timeTxt;
       timer.setAttribute('aria-valuetext', game.biting() ? 'Fish on' : `Next catch in ${left.toFixed(0)} seconds`);
@@ -1526,6 +1539,7 @@ export function mountGameUi(scene: Scene, game: Game): void {
       if (ht !== shown.happy) {
         aqHappy.hidden = !ht;
         aqHappy.textContent = ht;
+        aqHappy.dataset.glow = ht;
         aqRate.textContent = `+${rateText(game.tankIncome())}`;
         shown.happy = ht;
       }
@@ -1536,6 +1550,7 @@ export function mountGameUi(scene: Scene, game: Game): void {
     if (evTxt !== shown.evTxt) {
       cbEvent.hidden = !evTxt;
       cbEvent.textContent = evTxt;
+      cbEvent.dataset.glow = evTxt;
       board.classList.toggle('is-event', !!evTxt);
       shown.evTxt = evTxt;
     }

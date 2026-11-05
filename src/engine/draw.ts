@@ -217,10 +217,13 @@ export class Baked {
     dpr: number,
     paintFn: (ctx: Ctx) => void,
   ): void {
-    const k = `${key}|${area.x},${area.y},${area.w},${area.h}@${dpr}`;
+    // Snap the cache to whole device pixels so it is blitted 1:1 (crisp, no resampling).
+    const dx0 = Math.floor(area.x * dpr);
+    const dy0 = Math.floor(area.y * dpr);
+    const w = Math.max(1, Math.ceil((area.x + area.w) * dpr) - dx0);
+    const h = Math.max(1, Math.ceil((area.y + area.h) * dpr) - dy0);
+    const k = `${key}|${dx0},${dy0},${w},${h}@${dpr}`;
     if (k !== this.lastKey) {
-      const w = Math.max(1, Math.ceil(area.w * dpr));
-      const h = Math.max(1, Math.ceil(area.h * dpr));
       if (this.canvas.width !== w || this.canvas.height !== h) {
         this.canvas.width = w;
         this.canvas.height = h;
@@ -228,10 +231,10 @@ export class Baked {
       }
       this.bctx.setTransform(1, 0, 0, 1, 0, 0);
       this.bctx.clearRect(0, 0, w, h);
-      this.bctx.setTransform(dpr, 0, 0, dpr, -area.x * dpr, -area.y * dpr);
+      this.bctx.setTransform(dpr, 0, 0, dpr, -dx0, -dy0);
       paintFn(this.bctx);
       this.lastKey = k;
     }
-    ctx.drawImage(this.canvas, area.x, area.y, area.w, area.h);
+    ctx.drawImage(this.canvas, dx0 / dpr, dy0 / dpr, w / dpr, h / dpr);
   }
 }

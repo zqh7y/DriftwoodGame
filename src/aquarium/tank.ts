@@ -139,6 +139,9 @@ export function mountTank(host: HTMLElement): TankView {
   const STRIPS = reduced ? 6 : 10;
 
   let W = 390, H = 844, dpr = 1, sandY = 560;
+  // adaptive render scale (device px per CSS px), stepped down when frames run slow, like the lake
+  const SCALES = [2, 1.5, 1.25];
+  let level = 0;
   let night = 0;
   let decor = new Set<DecorId>();
   let swimmers: Swimmer[] = [];
@@ -172,6 +175,14 @@ export function mountTank(host: HTMLElement): TankView {
   let backKelp: KelpStrand[] = [];
   let frontKelp: KelpStrand[] = [];
   let dirty = true;
+  // composite back layer: water + rays + caustics + back kelp + decor + night tint, refreshed ~30 Hz
+  let layer: HTMLCanvasElement | null = null;
+  let layerX: CanvasRenderingContext2D | null = null;
+  let layerT = -1;
+  // bubble / shadow sprites pre-tinted by the night overlay (they are drawn above the layer)
+  let tintKey = -1;
+  let bubbleT: HTMLCanvasElement | null = null;
+  let shadowT: HTMLCanvasElement | null = null;
 
   const sandTop = (x: number): number => sandY + Math.sin(x / 55) * 9 + Math.sin(x / 23 + 1) * 3;
   const spot = (k: keyof typeof DECOR_SPOTS): { x: number; y: number } => {
@@ -183,7 +194,7 @@ export function mountTank(host: HTMLElement): TankView {
   function measure(): void {
     W = Math.max(1, window.innerWidth);
     H = Math.max(1, window.innerHeight);
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(SCALES[level], window.devicePixelRatio || 1);
     sandY = Math.round(Math.min(H * 0.665, H - BAR - 122));
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -300,6 +311,24 @@ export function mountTank(host: HTMLElement): TankView {
       foodFlake(f.x, k);
       return f.c;
     });
+    const L = rawCanvas(canvas.width, canvas.height);
+    layer = L.c;
+    layerX = L.c.getContext('2d', { alpha: false }) ?? L.x;
+    layerT = -1;
+    tintKey = -1;
+  }
+
+  /** A copy of a sprite with the night overlay applied (source-atop): drawing it above the tinted
+   *  layer gives exactly the colour of drawing the plain sprite below the tint. */
+  function tinted(src: HTMLCanvasElement, a: number): HTMLCanvasElement {
+    const o = rawCanvas(src.width, src.height);
+    o.x.drawImage(src, 0, 0);
+    if (a > 0) {
+      o.x.globalCompositeOperation = 'source-atop';
+      o.x.fillStyle = `rgba(6,18,72,${a.toFixed(3)})`;
+      o.x.fillRect(0, 0, src.width, src.height);
+    }
+    return o.c;
   }
 
   // ---------- fish sprites + baked lighting ----------
@@ -826,7 +855,7 @@ export function mountTank(host: HTMLElement): TankView {
   }
 
   function drawShadow(s: Swimmer): void {
-    if (!shadowSpr) return;
+    if (!shadowT) return;
     const B = boxOf(s.fish) * s.z;
     const y = s.y + s.bob;
     const gy = Math.max(sandTop(s.x) + 10, y + B * 0.26);
@@ -835,7 +864,7 @@ export function mountTank(host: HTMLElement): TankView {
     if (a < 0.01) return;
     const w = B * (0.62 + 0.55 * hn), h = w * 0.24;
     ctx.globalAlpha = a;
-    ctx.drawImage(shadowSpr, s.x - w / 2, gy - h / 2, w, h);
+    ctx.drawImage(shadowT, s.x - w / 2, gy - h / 2, w, h);
   }
 
   function drawFish(s: Swimmer, t: number): void {
@@ -982,7 +1011,7 @@ export function mountTank(host: HTMLElement): TankView {
 
   // ---------- scene ----------
 
-  function drawKelp(list: KelpStrand[], t: number, nightA = 0): void {
+  function drawKelp(g: CanvasRenderingContext2D, list: KelpStrand[], t: number, nightA = 0): void {
     const amp = 9 * calm, spd = 0.7 * calm;
     for (const k of list) {
       const strip = 14;
@@ -994,11 +1023,11 @@ export function mountTank(host: HTMLElement): TankView {
         const y0 = Math.max(0, sy);
         const h0 = sy + strip - y0;
         if (h0 <= 0) continue;
-        if (nightA < 0.98) ctx.drawImage(k.c, 0, y0 * dpr, k.c.width, h0 * dpr, k.ox + dx, k.oy + y0, k.w, h0);
+        if (nightA < 0.98) g.drawImage(k.c, 0, y0 * dpr, k.c.width, h0 * dpr, k.ox + dx, k.oy + y0, k.w, h0);
         if (nightA > 0.01) {
-          ctx.globalAlpha = nightA < 0.98 ? nightA : 1;
-          ctx.drawImage(k.cn, 0, y0 * dpr, k.c.width, h0 * dpr, k.ox + dx, k.oy + y0, k.w, h0);
-          ctx.globalAlpha = 1;
+          g.globalAlpha = nightA < 0.98 ? nightA : 1;
+          g.drawImage(k.cn, 0, y0 * dpr, k.c.width, h0 * dpr, k.ox + dx, k.oy + y0, k.w, h0);
+          g.globalAlpha = 1;
         }
       }
     }
@@ -1083,64 +1112,87 @@ export function mountTank(host: HTMLElement): TankView {
 
   let order: Swimmer[] = [];
 
-  function frame(t: number): void {
-    if (dirty) { rebuild(); updateLamps(); }
+  /** Everything behind the bubbles: slow-moving, so it is composed into one cached layer. */
+  function paintBack(g: CanvasRenderingContext2D, t: number): void {
     const day = 1 - night;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(bg!, 0, 0, W, H);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+    g.drawImage(bg!, 0, 0, W, H);
 
     // god rays: two sets breathing in counter-phase, drifting a little
     if (day > 0.02 && rays && rays2) {
       const rs = 0.25 * calm;
       const rh = sandY + 20;
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = day * (0.1 + 0.05 * Math.sin(t * rs * 1.3));
-      ctx.drawImage(rays, Math.sin(t * rs) * 14, 0, W, rh);
-      ctx.globalAlpha = day * (0.08 + 0.05 * Math.sin(t * rs * 1.1 + 2.2));
-      ctx.drawImage(rays2, Math.sin(t * rs * 0.8 + 1) * 18, 0, W, rh);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over';
+      g.globalCompositeOperation = 'lighter';
+      g.globalAlpha = day * (0.1 + 0.05 * Math.sin(t * rs * 1.3));
+      g.drawImage(rays, Math.sin(t * rs) * 14, 0, W, rh);
+      g.globalAlpha = day * (0.08 + 0.05 * Math.sin(t * rs * 1.1 + 2.2));
+      g.drawImage(rays2, Math.sin(t * rs * 0.8 + 1) * 18, 0, W, rh);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
     }
 
     // caustic shimmer on the sand
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = '#fffbe3';
+    g.globalCompositeOperation = 'lighter';
+    g.fillStyle = '#fffbe3';
     const cs = 0.6 * calm;
     for (let i = 0; i < 16; i++) {
       const bx = ((i * 97.3) % W + Math.sin(t * cs * 0.3 + i) * 18 + W) % W;
       const by = sandTop(bx) + 12 + ((i * 37) % 60);
       const a = (0.1 + 0.1 * Math.sin(t * cs * (1 + (i % 3) * 0.3) + i * 1.7)) * (0.4 + 0.6 * day);
       if (a <= 0.01) continue;
-      ctx.globalAlpha = a;
-      ctx.beginPath();
-      ctx.ellipse(bx, by, 10 + (i % 4) * 4 + Math.sin(t * cs + i) * 3, 2.4, 0, 0, Math.PI * 2);
-      ctx.fill();
+      g.globalAlpha = a;
+      g.beginPath();
+      g.ellipse(bx, by, 10 + (i % 4) * 4 + Math.sin(t * cs + i) * 3, 2.4, 0, 0, Math.PI * 2);
+      g.fill();
     }
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+
+    drawKelp(g, backKelp, t);
+    if (deco) g.drawImage(deco, 0, decoTop, W, H - decoTop);
+
+    // night: cool, dim water (bubbles + shadows above use pre-tinted sprites, same result)
+    if (night > 0.01) {
+      g.fillStyle = `rgba(6,18,72,${(0.56 * night).toFixed(3)})`;
+      g.fillRect(0, 0, W, H);
+    }
+  }
+
+  function frame(t: number): void {
+    if (dirty) { rebuild(); updateLamps(); }
+    // the back layer moves slowly (kelp tips < 10 px/s): refresh it at ~30 Hz
+    if (layer && layerX && (layerT < 0 || t - layerT >= 0.026 || t < layerT)) {
+      paintBack(layerX, t);
+      layerT = t;
+    }
+    const tk = night > 0.01 ? Math.round(night * 128) : 0;
+    if (tk !== tintKey && bubbleSpr && shadowSpr) {
+      tintKey = tk;
+      const a = tk ? 0.56 * (tk / 128) : 0;
+      bubbleT = tinted(bubbleSpr, a);
+      shadowT = tinted(shadowSpr, a);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
-
-    drawKelp(backKelp, t);
-    if (deco) ctx.drawImage(deco, 0, decoTop, W, H - decoTop);
+    if (layer) ctx.drawImage(layer, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // bubbles
-    if (bubbleSpr) {
+    if (bubbleT) {
       for (const b of bubbles) {
         ctx.globalAlpha = b.a * clamp((b.y - 96) / 60, 0, 1) * 0.95;
         const s = b.r * 2.4;
-        ctx.drawImage(bubbleSpr, b.x - s / 2, b.y - s / 2, s, s);
+        ctx.drawImage(bubbleT, b.x - s / 2, b.y - s / 2, s, s);
       }
     }
     // soft fish shadows on the sand
     for (const s of swimmers) drawShadow(s);
     ctx.globalAlpha = 1;
 
-    // night: cool, dim water; then the emitted lights come up
-    if (night > 0.01) {
-      ctx.fillStyle = `rgba(6,18,72,${(0.56 * night).toFixed(3)})`;
-      ctx.fillRect(0, 0, W, H);
-    }
+    // night: the emitted lights come up (the dimming is baked into the back layer)
     ctx.globalCompositeOperation = 'lighter';
     if (decor.has('lantern') && warm) {
       const p = spot('lantern');
@@ -1218,7 +1270,7 @@ export function mountTank(host: HTMLElement): TankView {
     for (const s of order) drawFeel(s);
     ctx.globalAlpha = 1;
 
-    drawKelp(frontKelp, t + 1.3, night);
+    drawKelp(ctx, frontKelp, t + 1.3, night);
   }
 
   // ---------- loop ----------
@@ -1237,13 +1289,37 @@ export function mountTank(host: HTMLElement): TankView {
     }
   };
   let fpsCap = 0;
+  // rolling ~2 s window of rAF gaps + CPU work driving the render scale
+  let winStart = 0, winFrames = 0, winSum = 0, winWork = 0, goodWins = 0, upNeed = 4, lastChange = 0, rescale = false;
+  const adapt = (now: number, gap: number, work: number): void => {
+    if (!winStart || gap > 250) { winStart = now; winFrames = winSum = winWork = 0; return; }
+    winFrames++; winSum += gap; winWork += work;
+    if (now - winStart < 2000 || winFrames < 12) return;
+    const avg = winSum / winFrames, avgWork = winWork / winFrames;
+    winStart = now; winFrames = winSum = winWork = 0;
+    const device = window.devicePixelRatio || 1;
+    if (avg > 18) {
+      goodWins = 0;
+      if (level >= SCALES.length - 1 || device <= SCALES[level + 1]) return;
+      if (lastChange > 0 && now - lastChange < 6000) upNeed = Math.min(64, upNeed * 2);
+      level++; lastChange = now; rescale = true;
+    } else if (avg < 17.5 && avgWork < 6 && level > 0) {
+      if (++goodWins >= upNeed) { level--; goodWins = 0; lastChange = now; rescale = true; }
+    } else goodWins = 0;
+  };
   const tick = (now: number): void => {
     raf = requestAnimationFrame(tick);
     if (fpsCap > 0 && last && now - last < 1000 / fpsCap - 3) return;
-    const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
+    const gap = last ? now - last : 0;
+    const dt = last ? Math.min(0.1, gap / 1000) : 1 / 60;
     last = now;
+    // a scale step is applied right before drawing (resizing the canvas clears it)
+    if (rescale) { rescale = false; measure(); }
+    const t0 = performance.now();
     step(dt);
     frame(clock);
+    if (fpsCap <= 0 && gap > 0) adapt(now, gap, performance.now() - t0);
+    else winStart = 0;
   };
 
   const onResize = (): void => {
@@ -1301,6 +1377,7 @@ export function mountTank(host: HTMLElement): TankView {
       if (!canvas.hidden && raf) return;
       canvas.hidden = false;
       last = 0;
+      winStart = 0;
       if (!raf) raf = requestAnimationFrame(tick);
     },
     setFpsCap: (fps) => {

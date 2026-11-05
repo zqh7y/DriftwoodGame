@@ -27,6 +27,7 @@ interface Firefly {
 
 const dock: LayerModule = (s) => {
   const deck = new Baked();
+  const postBake = [new Baked(), new Baked(), new Baked(), new Baked()];
   const reeds = createReeds(s);
   let fireflies: Firefly[] = [];
   const rnd = s.rng('dock.critters');
@@ -254,29 +255,16 @@ const dock: LayerModule = (s) => {
     ctx.restore();
   };
 
-  /** One round wooden post: reflection, cylinder body, deck shadow, bark, rope, wet band, end-grain cap. */
-  const drawPiling = (s: Scene, ctx: CanvasRenderingContext2D, p: Piling): void => {
+  /** The static part of a post (cylinder body, deck shadow, bark, rope, wet band, end-grain cap). It only
+   *  changes with the light, so it is baked per post and re-painted when the grade changes. */
+  const paintPostBody = (s: Scene, ctx: CanvasRenderingContext2D, p: Piling): void => {
     const u = s.u;
     const k = p.k;
     const w = p.w;
     const x = p.x - w / 2;
-    const ry = w * 0.27; // ellipse depth of the round cross-section
+    const ry = w * 0.27;
     const out = s.col(C.outline);
     const day = s.light.daylight;
-    // ---- reflection: the post continues upside down, wavy and fading into the lake
-    const rh = (p.water - p.deckBottom) * 1.3 + 10 * u * k;
-    const slices = 9;
-    for (let i = 0; i < slices; i++) {
-      const t0 = i / slices;
-      const yy = p.water + ry * 0.6 + t0 * rh;
-      const wob = Math.sin(s.t * 1.7 + i * 1.25 + p.x * 0.04) * 2 * u * (0.3 + t0);
-      const g = ctx.createLinearGradient(x, 0, x + w, 0);
-      g.addColorStop(0, s.colA(C.wood.line, 0.5 * (1 - t0)));
-      g.addColorStop(0.35, s.colA(C.wood.mid, 0.45 * (1 - t0)));
-      g.addColorStop(1, s.colA(C.wood.line, 0.5 * (1 - t0)));
-      ctx.fillStyle = g;
-      ctx.fillRect(x + wob + w * 0.06, yy, w * 0.88, rh / slices + 0.6);
-    }
     // ---- the body (cylinder), clipped so all shading stays inside
     const body = (): void => {
       ctx.beginPath();
@@ -390,6 +378,37 @@ const dock: LayerModule = (s) => {
     ctx.strokeStyle = out;
     ctx.lineWidth = 2.2 * u;
     ctx.stroke();
+  };
+
+  /** One round wooden post: reflection, cylinder body, deck shadow, bark, rope, wet band, end-grain cap. */
+  const drawPiling = (s: Scene, ctx: CanvasRenderingContext2D, p: Piling, i: number): void => {
+    const u = s.u;
+    const k = p.k;
+    const w = p.w;
+    const x = p.x - w / 2;
+    const ry = w * 0.27; // ellipse depth of the round cross-section
+    const out = s.col(C.outline);
+    const day = s.light.daylight;
+    // ---- reflection: the post continues upside down, wavy and fading into the lake
+    const rh = (p.water - p.deckBottom) * 1.3 + 10 * u * k;
+    const slices = 9;
+    for (let i = 0; i < slices; i++) {
+      const t0 = i / slices;
+      const yy = p.water + ry * 0.6 + t0 * rh;
+      const wob = Math.sin(s.t * 1.7 + i * 1.25 + p.x * 0.04) * 2 * u * (0.3 + t0);
+      const g = ctx.createLinearGradient(x, 0, x + w, 0);
+      g.addColorStop(0, s.colA(C.wood.line, 0.5 * (1 - t0)));
+      g.addColorStop(0.35, s.colA(C.wood.mid, 0.45 * (1 - t0)));
+      g.addColorStop(1, s.colA(C.wood.line, 0.5 * (1 - t0)));
+      ctx.fillStyle = g;
+      ctx.fillRect(x + wob + w * 0.06, yy, w * 0.88, rh / slices + 0.6);
+    }
+    // ---- the body: static between light changes, so it comes from a per-post cache
+    const m = 4 * u * Math.max(1, k);
+    const top = p.cap - ry - m;
+    postBake[i].draw(ctx, `${s.light.key}|${day.toFixed(3)}`, { x: x - m, y: top, w: w + 2 * m, h: p.water + ry + m - top }, s.dpr, (c) =>
+      paintPostBody(s, c, p),
+    );
     // ---- where the post meets the water: a dark wet ring, then a breathing foam ring
     if (p.water < s.H) {
       ctx.beginPath();
@@ -474,7 +493,9 @@ const dock: LayerModule = (s) => {
         }
       },
       draw(s, ctx) {
-        for (const p of pilings(s)) if (p.cap < s.H + 20 * s.u) drawPiling(s, ctx, p);
+        pilings(s).forEach((p, i) => {
+          if (p.cap < s.H + 20 * s.u) drawPiling(s, ctx, p, i);
+        });
       },
     },
 

@@ -207,6 +207,22 @@ export class Scene {
   private perfAcc = new Map<string, number>();
   private started = false;
 
+  // Adaptive resolution: the backing canvas renders at `dpr` = min(device ratio, cap, SCALES[level]).
+  // A slow phone steps down a notch when frames are consistently late and creeps back up only after
+  // a long stretch with plenty of headroom. Layout and anchors always stay in CSS px.
+  private static readonly SCALES = [2, 1.75, 1.5, 1.25];
+  private adaptive = true;
+  private level = 0;
+  private winStart = 0;
+  private winFrames = 0;
+  private winSum = 0;
+  private winWork = 0;
+  private goodWins = 0;
+  /** Windows of headroom needed before stepping back up; doubles each time an upgrade proves too much. */
+  private upNeed = 4;
+  private lastChange = 0;
+  private rescale = false;
+
   constructor(view: HTMLCanvasElement, query = new URLSearchParams()) {
     this.view = view;
     this.ctx = ctx2d(view);
@@ -235,7 +251,13 @@ export class Scene {
       { id: 'engine.particles.front', z: 372, draw: (s, c) => s.particles.draw(s, c, true) },
     );
 
+    if (this.query.get('dpr')) this.adaptive = false;
     addEventListener('resize', () => this.measure());
+    // Nothing is drawn while the app is in the background; restart the frame-time window on return.
+    document.addEventListener('visibilitychange', () => {
+      this.lastNow = 0;
+      this.winStart = 0;
+    });
     window.visualViewport?.addEventListener('resize', () => this.measure());
   }
 
@@ -437,10 +459,11 @@ export class Scene {
 
   // ------------------------------------------------------------ sizing
 
-  private measure(): void {
+  private measure(scaleOnly = false): void {
     // Capped at 2× by default: sharp on phones and smooth on mid-range Android devices. ?dpr=3 to override.
     const maxDpr = Number(this.query.get('dpr') ?? 0) || 2;
-    const dpr = clamp(window.devicePixelRatio || 1, 1, maxDpr);
+    const scale = this.adaptive ? Scene.SCALES[this.level] : maxDpr;
+    const dpr = clamp(window.devicePixelRatio || 1, 1, Math.min(maxDpr, scale));
     const W = Math.max(1, this.view.clientWidth || window.innerWidth);
     const H = Math.max(1, this.view.clientHeight || window.innerHeight);
     const dw = Math.round(W * dpr);
@@ -450,9 +473,13 @@ export class Scene {
       this.view.height = dh;
       this.ctx = ctx2d(this.view);
     }
-    const changed = W !== this.W || H !== this.H || dpr !== this.dpr;
+    const sizeChanged = W !== this.W || H !== this.H;
+    const changed = sizeChanged || dpr !== this.dpr;
     this.dpr = dpr;
     if (!changed) return;
+    // An adaptive scale step keeps the CSS-px layout: offscreen caches are keyed on s.dpr and re-bake
+    // themselves, so layers aren't re-initialised (no reshuffled fireflies or reset animations).
+    if (scaleOnly && !sizeChanged) return;
     this.W = W;
     this.H = H;
     this.layout = computeLayout(W, H);
@@ -527,7 +554,62 @@ export class Scene {
     }
   }
 
+  /** Rolling frame-time check (~2 s windows) driving the render scale. `gap` is the rAF interval, `work`
+   *  the CPU time of step+render, both in ms. Only called for frames drawn at full rate. */
+  private adapt(now: number, gap: number, work: number): void {
+    if (!this.adaptive) return;
+    if (!this.winStart || gap > 250) {
+      // First frame, or a hitch (tab switch, GC pause): start a fresh window.
+      this.winStart = now;
+      this.winFrames = this.winSum = this.winWork = 0;
+      return;
+    }
+    this.winFrames++;
+    this.winSum += gap;
+    this.winWork += work;
+    if (now - this.winStart < 2000 || this.winFrames < 12) return;
+    const avg = this.winSum / this.winFrames;
+    const avgWork = this.winWork / this.winFrames;
+    this.winStart = now;
+    this.winFrames = this.winSum = this.winWork = 0;
+    const floor = Scene.SCALES.length - 1;
+    const device = window.devicePixelRatio || 1;
+    if (avg > 18) {
+      this.goodWins = 0;
+      // Already at (or below) the lowest step this screen can use: nothing to gain.
+      if (this.level >= floor || device <= Scene.SCALES[this.level + 1]) return;
+      // Dropping right after an upgrade: that upgrade was too much, wait longer next time.
+      if (now - this.lastChange < 6000 && this.lastChange > 0) this.upNeed = Math.min(64, this.upNeed * 2);
+      this.setLevel(this.level + 1, now);
+    } else if (avg < 17.5 && avgWork < 6 && this.level > 0) {
+      if (++this.goodWins >= this.upNeed) this.setLevel(this.level - 1, now);
+    } else {
+      this.goodWins = 0;
+    }
+  }
+
+  private setLevel(level: number, now: number): void {
+    this.level = level;
+    this.goodWins = 0;
+    this.lastChange = now;
+    // Applied at the start of the next drawn frame, right before it renders: resizing the backing
+    // store clears it, so doing it now (after this frame was drawn) would present a blank frame.
+    this.rescale = true;
+  }
+
+  /** Current render scale (device px per CSS px) and the adaptive step (debugging / tooling). */
+  renderScale(): { dpr: number; level: number; adaptive: boolean } {
+    return { dpr: this.dpr, level: this.level, adaptive: this.adaptive };
+  }
+
   private tick = (now: number): void => {
+    if (document.hidden) {
+      // Backgrounded (Android WebView may keep calling rAF): don't simulate or draw.
+      this.lastNow = 0;
+      requestAnimationFrame(this.tick);
+      return;
+    }
+    const gap = this.lastNow ? now - this.lastNow : 0;
     const dt = this.lastNow ? clamp((now - this.lastNow) / 1000, 0, 0.05) : 1 / 60;
     this.lastNow = now;
     if (this.fpsCap > 0 && now - this.lastDraw < 1000 / this.fpsCap - 3) {
@@ -539,18 +621,28 @@ export class Scene {
     if (this.offstage) {
       if (!this.paused) this.step(Math.min(0.1, dt + this.acc));
       this.acc = 0;
+      this.winStart = 0;
       requestAnimationFrame(this.tick);
       return;
     }
     if (this.dimmed && ++this.skipped % 2 === 1) {
       this.acc += dt;
+      this.winStart = 0;
       requestAnimationFrame(this.tick);
       return;
     }
     const step = Math.min(0.1, dt + this.acc);
     this.acc = 0;
+    const w0 = performance.now();
     if (!this.paused) this.step(step);
+    if (this.rescale) {
+      this.rescale = false;
+      this.measure(true);
+    }
     this.render();
+    // Frame pacing is only meaningful at full rate (no battery cap, no half-rate dimming).
+    if (this.fpsCap === 0 && !this.dimmed) this.adapt(now, gap, performance.now() - w0);
+    else this.winStart = 0;
     requestAnimationFrame(this.tick);
   };
 
